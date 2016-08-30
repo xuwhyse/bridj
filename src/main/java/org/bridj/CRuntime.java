@@ -59,6 +59,7 @@ import org.bridj.ann.Optional;
 import org.bridj.demangling.Demangler.Symbol;
 import org.bridj.util.ConcurrentCache;
 import org.bridj.util.Utils;
+import org.bridj.whyse.LogUtil;
 
 /**
  * C runtime (used by default when no {@link org.bridj.ann.Runtime} annotation
@@ -370,7 +371,7 @@ public class CRuntime extends AbstractBridJRuntime {
 
     @SuppressWarnings("unchecked")
     synchronized void register(Type type, NativeLibrary forcedLibrary, MethodCallInfoBuilder methodCallInfoBuilder) {
-        Class<?> typeClass = Utils.getClass(type);
+        Class<?> typeClass = Utils.getClass(type);//获取对应dll生成的java主类的名字
         if (!BridJ.getRuntimeClass(typeClass).isInstance(this)) {
             BridJ.register(typeClass);
             return;
@@ -441,15 +442,18 @@ public class CRuntime extends AbstractBridJRuntime {
 
 //		for (; type != null && type != Object.class; type = type.getSuperclass()) {
             List<Method> nativeMethods = new ArrayList<Method>();
+            LogUtil.getLog().debug("获取bridj主类中需要native的方法:");
             for (Method method : typeClass.getDeclaredMethods()) {
                 int modifiers = method.getModifiers();
                 if (Modifier.isNative(modifiers)) {
                     if (!isAnnotationPresent(JNIBound.class, method)) {
                         nativeMethods.add(method);
+                        LogUtil.getLog().debug(method.toString());
                     }
                 }
             }
-
+            LogUtil.getLog().debug("获取方法结束======================================");
+            //上一步反射获取了所有native字段修饰的方法
             if (!nativeMethods.isEmpty()) {
                 try {
                     for (Method method : nativeMethods) {

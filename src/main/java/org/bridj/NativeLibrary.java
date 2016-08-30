@@ -61,6 +61,7 @@ import org.bridj.demangling.Demangler.MemberRef;
 import org.bridj.demangling.Demangler.Symbol;
 import org.bridj.demangling.GCC4Demangler;
 import org.bridj.demangling.VC9Demangler;
+import org.bridj.whyse.LogUtil;
 
 /**
  * Representation of a native shared library, with symbols retrieval / matching
@@ -255,6 +256,7 @@ public class NativeLibrary {
             Method method = (Method) member;
             for (Demangler.Symbol symbol : getSymbols()) {
                 if (symbol.matches(method)) {
+                	LogUtil.getLog().debug("匹配一个方法!!!!!! : "+symbol.toString());
                     return symbol;
                 }
             }
@@ -354,7 +356,7 @@ public class NativeLibrary {
 
     @SuppressWarnings("deprecation")
     void scanSymbols() throws Exception {
-        if (addrToName != null) {
+         if (addrToName != null) {
             return;
         }
 
@@ -365,7 +367,12 @@ public class NativeLibrary {
         if (symbs == null) {
             //System.out.println("Calling getLibrarySymbols");
             symbs = JNI.getLibrarySymbols(getHandle(), getSymbolsHandle());
-            //System.out.println("Got " + symbs + " (" + (symbs == null ? "null" : symbs.length + "") + ")");
+            LogUtil.getLog().debug("不可变方法读取dll文件，获得方法如下,需要解析:");
+            for(String name : symbs){
+            	LogUtil.getLog().debug(name);
+            }
+            LogUtil.getLog().debug("==================================================");
+//            System.out.println("Got " + symbs + " (" + (symbs == null ? "null" : symbs.length + "") + ")");
         }
 
         if (symbs == null) {
@@ -430,6 +437,14 @@ public class NativeLibrary {
         if (Platform.isWindows()) {
             try {
                 MemberRef result = new VC9Demangler(this, symbol).parseSymbol();
+                //============根据所有打印信息，临时修改代码，让它匹配到方法=================
+                if(result.paramTypes.length==3){
+                	if(result.paramTypes[2].toString().equals("CThostFtdcMdApi*"))
+                		result.paramTypes[2] = result.paramTypes[1];
+                }
+                //==============================================
+                LogUtil.getLog().debug("尝试匹配:"+symbol.toString()+"--->"+result.toString());
+                LogUtil.getLog().debug("尝试匹配:"+symbol.toString()+"--->"+result.toString());
                 if (result != null) {
                     return result;
                 }

@@ -627,6 +627,7 @@ public class VC9Demangler extends Demangler {
     private List<TypeRef> parseParams() throws DemanglingException {
         List<TypeRef> paramTypes = new ArrayList<TypeRef>();
         if (!consumeCharIf('X')) {
+        	xmConsumeChar();
             char c;
             while ((c = peekChar()) != '@' && c != 0 && (c != 'Z' || peekChar(2) == 'Z')) {
                 TypeRef tr = parseType(false);
@@ -645,8 +646,23 @@ public class VC9Demangler extends Demangler {
         }
         return paramTypes;
     }
+    /**
+     * 根据观察?CreateMath@Math@@SAP EAV(Found struct, class or union)1(吃掉)@PEBD@(之前应该是参数和返回) Z
+     * 如果@之前是1就把@号去掉
+     * author:xumin 
+     * 2016-5-5 下午8:55:41
+     */
+    private void xmConsumeChar() {
+    	if(position>0 && position<length ){
+	    	char a = str.charAt(position);
+	    	char b = str.charAt(position-1);
+	    	if(Character.isDigit(b) && a=='@'){
+	    		position++;
+	    	}
+    	}
+	}
 
-    private List<TemplateArg> parseTemplateParams() throws DemanglingException {
+	private List<TemplateArg> parseTemplateParams() throws DemanglingException {
         return withEmptyQualifiedNames(new DemanglingOp<List<TemplateArg>>() {
             public List<TemplateArg> run() throws DemanglingException {
                 List<TemplateArg> paramTypes = new ArrayList<TemplateArg>();
